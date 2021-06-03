@@ -1,31 +1,53 @@
 package com.raywenderlich.home_challenge.ui
 
+import android.content.Context
+import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.lifecycle.LiveData
+import androidx.paging.PagingDataAdapter
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.raywenderlich.home_challenge.data.Domus
 import com.raywenderlich.home_challenge.data.DomusItem
 import com.raywenderlich.home_challenge.databinding.ItemViewBinding
 import com.raywenderlich.home_challenge.databinding.ProgressBarBinding
 import java.lang.RuntimeException
+import kotlin.coroutines.coroutineContext
+import kotlin.math.abs
 
-class DomusAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class DomusAdapter(private val context: Context):PagingDataAdapter<DomusItem,RecyclerView.ViewHolder>(Diff) {
 
-    var homeList: List<DomusItem> = emptyList()
-        set(value) {
-            field = value
-            notifyDataSetChanged()
+
+    companion object {
+        const val VIEW_TYPE_DOMUS = 1
+        const val VIEW_TYPE_LOADER = 2
+
+        private val Diff = object: DiffUtil.ItemCallback<DomusItem>(){
+
+            override fun areItemsTheSame(oldItem: DomusItem, newItem: DomusItem): Boolean {
+                return oldItem == newItem
+            }
+
+            override fun areContentsTheSame(oldItem: DomusItem, newItem: DomusItem): Boolean {
+                return oldItem.id == newItem.id
+            }
+
         }
+    }
 
-    var moreData = true
+    inner class DomusViewHolder(private val binding: ItemViewBinding):RecyclerView.ViewHolder(binding.root){
 
+        private lateinit var dataItem: DomusItem
+        fun onBind(){
+            dataItem = getItem(absoluteAdapterPosition)!!
+            binding.titleTextView.text = dataItem.titleKA
+            Glide.with(context).load(dataItem.cover)
+                .into(binding.newsCoverImageView)
 
-
-    class DomusViewHolder(val binding: ItemViewBinding):RecyclerView.ViewHolder(binding.root){
+        }
 
     }
 
@@ -46,28 +68,23 @@ class DomusAdapter: RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
 
 
+
+
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+
         when(holder){
             is DomusViewHolder ->{
-                val item = homeList[position]
-                holder.binding.titleTextView.text = item.titleKA
-                Glide.with(holder.itemView).load(item.cover)
-                    .into(holder.binding.newsCoverImageView)
+                holder.onBind()
 
             }
             is LoadingViewHolder ->{
                 holder.binding.progressBar.isVisible
-                moreData = true
             }
         }
     }
 
-    override fun getItemCount() = homeList.size + 1
 
 
-    companion object{
-        const val VIEW_TYPE_DOMUS = 1
-        const val VIEW_TYPE_LOADER = 2
-    }
+
 
 }
